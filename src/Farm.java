@@ -8,12 +8,12 @@ public class Farm {
     public static final int COLS = 20;
     public static final int ROWS = 15;
 
-    // . grass   , tilled soil   # fence   ~ pond   H house   S shop   B shipping bin   V where the villager stands
+    // . grass   , tilled soil   # fence   ~ pond   H house   S seed shop   M machine shop   B shipping bin   V where the villager stands
     private static final String[] MAP = {
         "####################",
-        "#HHHH.........SSSS.#",
-        "#HHHH.........SSSS.#",
-        "#HHHH.........SSSS.#",
+        "#HHHH...MMMM..SSSS.#",
+        "#HHHH...MMMM..SSSS.#",
+        "#HHHH...MMMM..SSSS.#",
         "#..................#",
         "#..................#",
         "#...,,,,,..V.......#",
@@ -95,7 +95,8 @@ public class Farm {
             for (int c = 0; c < COLS; c++) drawTile(g, tiles[r][c], c, r);
         }
         drawHouse(g, boundsOf(TileType.HOUSE));
-        drawShop(g, boundsOf(TileType.SHOP));
+        drawShop(g, boundsOf(TileType.SHOP), "SEEDS");
+        drawShop(g, boundsOf(TileType.MACHINE), "Machines");
         drawBin(g, boundsOf(TileType.BIN));
     }
 
@@ -185,7 +186,7 @@ public class Farm {
         g.drawRect(b.x + b.width - 46, wallTop + 16, 24, 18);
     }
 
-    private void drawShop(Graphics2D g, Rectangle b) {
+    private void drawShop(Graphics2D g, Rectangle b, String label) {
         g.setColor(WOOD);
         g.fillRect(b.x + 6, b.y + 30, 4, b.height - 30);
         g.fillRect(b.x + b.width - 10, b.y + 30, 4, b.height - 30);
@@ -194,11 +195,13 @@ public class Farm {
             g.setColor(i % 2 == 0 ? new Color(220, 60, 60) : new Color(250, 245, 235));
             g.fillRect(b.x + i * b.width / 8, b.y + 6, b.width / 8, 24);
         }
-        g.setColor(new Color(250, 240, 200));
-        g.fillRect(b.x + b.width / 2 - 32, b.y + b.height / 2 + 14, 64, 20);
-        g.setColor(new Color(60, 40, 30));
         g.setFont(new Font(Font.MONOSPACED, Font.BOLD, 14));
-        g.drawString("SEEDS", b.x + b.width / 2 - 21, b.y + b.height / 2 + 29);
+        int textWidth = g.getFontMetrics().stringWidth(label);
+        int signWidth = Math.max(64, textWidth + 12);   // SEEDS keeps its 64px sign; longer names get a wider one
+        g.setColor(new Color(250, 240, 200));
+        g.fillRect(b.x + b.width / 2 - signWidth / 2, b.y + b.height / 2 + 14, signWidth, 20);
+        g.setColor(new Color(60, 40, 30));
+        g.drawString(label, b.x + b.width / 2 - textWidth / 2, b.y + b.height / 2 + 29);
     }
 
     private void drawBin(Graphics2D g, Rectangle b) {
