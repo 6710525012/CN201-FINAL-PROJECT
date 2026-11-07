@@ -111,6 +111,9 @@ public class FarmScreen implements Screen {
                 case SHOP:
                     game.setScreen(new ShopScreen(game, this));
                     return;
+                case MACHINE:
+                    game.setScreen(new MachineShopScreen(game, this));
+                    return;
                 case BIN:
                     ship();
                     return;
@@ -147,6 +150,7 @@ public class FarmScreen implements Screen {
         switch (tile.getType()) {
             case HOUSE: return "Sleep";
             case SHOP:  return "Shop";
+            case MACHINE: return "Machines";
             case BIN:   return "Ship basket";
             case POND:  return "Refill can";
             default:    break;
