@@ -1,7 +1,10 @@
 import java.util.Random;
 
-/** "Bring me 3 turnips within 6 days and I'll pay double." */
+/** "Bring me 3 turnips within 3 days and I'll pay double." */
 public class Request {
+    /** Extra days on top of the crop's growing time. 0 = same as growth days (3 / 5 / 6). */
+    public static final int DEADLINE_SLACK = 0;
+
     private final String cropName;
     private final int amount;
     private final int reward;
@@ -24,7 +27,7 @@ public class Request {
         String name = CropFactory.NAMES[rng.nextInt(known)];
         Crop crop = CropFactory.create(name);
         int amount = 2 + rng.nextInt(3);
-        return new Request(name, amount, crop.getSellPrice() * amount * 2, crop.getDaysToMature() + 3);
+        return new Request(name, amount, crop.getSellPrice() * amount * 2, crop.getDaysToMature() + DEADLINE_SLACK);
     }
 
     /** @return false once time has run out */
