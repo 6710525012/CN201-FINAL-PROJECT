@@ -67,7 +67,8 @@ public class SaveGame {
                         + request.getReward() + " " + request.getDaysLeft());
             }
             for (Machine machine : farm.getMachines()) {
-                out.println("machine " + machine.getKind().name() + " " + machine.getCol() + " " + machine.getRow());
+                out.println("machine " + machine.getKind().name() + " " + machine.getCol() + " " + machine.getRow()
+                        + (machine.isIdle() ? "" : " " + machine.getDaysLeft()));   // days left only while loaded
             }
             for (int r = 0; r < Farm.ROWS; r++) {
                 for (int c = 0; c < Farm.COLS; c++) {
@@ -103,11 +104,16 @@ public class SaveGame {
                         break;
                     case "can":    farmer.getCan().setWater(Integer.parseInt(parts[1])); break;
                     case "seeds":  farmer.getSeedBag(parts[1]).setSeeds(Integer.parseInt(parts[2])); break;
-                    case "basket": farmer.getBasket().add(parts[1], Integer.parseInt(parts[2])); break;
+                    case "basket":   // the name may hold spaces ("Turnip Cake"), the amount is the last word
+                        farmer.getBasket().add(String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length - 1)),
+                                Integer.parseInt(parts[parts.length - 1]));
+                        break;
                     case "soil":   loadSoil(farm, parts); break;
                     case "machine":
-                        farm.addMachine(new Machine(Machine.Kind.valueOf(parts[1]),
-                                Integer.parseInt(parts[2]), Integer.parseInt(parts[3])));
+                        Machine machine = new Machine(Machine.Kind.valueOf(parts[1]),
+                                Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
+                        if (parts.length > 4) machine.restore(Integer.parseInt(parts[4]));
+                        farm.addMachine(machine);
                         break;
                     case "":       break;   // blank line
                     default:       throw new IOException("line " + (i + 1) + ": unknown entry '" + parts[0] + "'");

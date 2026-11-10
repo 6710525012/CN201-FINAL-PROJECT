@@ -110,7 +110,7 @@ public class FarmScreen implements Screen {
         }
         Machine machine = farm.machineAt(col, row);
         if (machine != null) {
-            say("The " + machine.getKind().getName() + " is installed - it can't make anything yet");
+            useMachine(machine);
             return;
         }
         Tile tile = farm.tileAt(col, row);
@@ -158,7 +158,13 @@ public class FarmScreen implements Screen {
         int col = farmer.facingCol(), row = farmer.facingRow();
         if (farm.villagerAt(col, row) != null) return "Talk";
         Machine machine = farm.machineAt(col, row);
-        if (machine != null) return machine.getKind().getName();
+        if (machine != null) {
+            Machine.Kind kind = machine.getKind();
+            if (machine.isReady()) return "Collect " + kind.getProduct();
+            if (machine.isWorking()) return kind.getName() + " (" + machine.getDaysLeft() + "d left)";
+            if (farmer.getBasket().count(kind.getIngredient()) > 0) return "Load " + kind.getIngredient();
+            return kind.getName() + " (needs " + kind.getIngredient() + ")";
+        }
         Tile tile = farm.tileAt(col, row);
         if (tile == null) return null;
         switch (tile.getType()) {
@@ -181,13 +187,45 @@ public class FarmScreen implements Screen {
         if (reward > 0) floatAt(villager.getCol(), villager.getRow(), "+" + reward + "G", Ui.HIGHLIGHT);
         if (checklist != null) checklist.complete(Checklist.Step.TALK);
     }
+
+        /** SPACE at a machine: collect what is ready, report progress, or load one ingredient from the basket. */
+    private void useMachine(Machine machine) {
+        Machine.Kind kind = machine.getKind();
+        try {
+            if (machine.isReady()) {
+                String product = machine.collect();
+                farmer.getBasket().add(product, 1);
+                floatAtFacing("+1 " + product, Color.WHITE);
+                say("Collected a " + product.toLowerCase() + " - ship it in the bin");
+            } else if (machine.isWorking()) {
+                int nights = machine.getDaysLeft();
+                say("The " + kind.getName() + " is working - " + nights + (nights == 1 ? " more night" : " more nights"));
+            } else {
+                if (!farmer.getBasket().remove(kind.getIngredient(), 1)) {
+                    throw new FarmException("The " + kind.getName() + " needs a " + kind.getIngredient().toLowerCase()
+                            + " - harvest one first");
+                }
+                machine.load();
+                floatAtFacing("-1 " + kind.getIngredient(), Color.WHITE);
+                say("Making " + kind.getProduct().toLowerCase() + " - ready in " + kind.getDays() + " nights");
+            }
+        } catch (FarmException e) {
+            say(e.getMessage());
+        }
+    }
+
+    /** What one of this thing sells for: a crop, or something a machine made. */
+    private static int priceOf(String name) {
+        Machine.Kind kind = Machine.Kind.forProduct(name);
+        return kind != null ? kind.getSellPrice() : CropFactory.create(name).getSellPrice();
+    }
  
     private void ship() throws FarmException {
         Bag<String> basket = farmer.getBasket();
         if (basket.isEmpty()) throw new FarmException("Nothing to ship - harvest something first");
         int value = 0;
         for (Map.Entry<String, Integer> entry : basket.asMap().entrySet()) {
-            value += CropFactory.create(entry.getKey()).getSellPrice() * entry.getValue();
+            value += priceOf(entry.getKey()) * entry.getValue();
             shippedToday.add(entry.getKey(), entry.getValue());
         }
         basket.clear();
@@ -210,7 +248,7 @@ public class FarmScreen implements Screen {
         if (passedOut) lines.add("You passed out at midnight! Half energy today.");
         int earned = 0;
         for (Map.Entry<String, Integer> entry : shippedToday.asMap().entrySet()) {
-            int value = CropFactory.create(entry.getKey()).getSellPrice() * entry.getValue();
+            int value = priceOf(entry.getKey()) * entry.getValue();
             lines.add(String.format("Shipped %-10s x%-3d %6dG", entry.getKey(), entry.getValue(), value));
             earned += value;
         }
