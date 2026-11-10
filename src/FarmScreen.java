@@ -285,7 +285,7 @@ public class FarmScreen implements Screen {
         drawHint(g, col, row);
  
         Hud.draw(g, farmer, clock, farm.getVillager());
-        if (checklist != null) checklist.draw(g, 195, 36);
+        if (checklist != null) checklist.draw(g, 140, 300);
         if (messageTicks > 0) drawMessage(g);
         if (fadeTicks > 0) drawDayStart(g);
     }
