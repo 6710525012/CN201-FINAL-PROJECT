@@ -6,7 +6,7 @@ import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
 import java.util.Random;
-
+ 
 /** The farm itself: walking, farming, talking, and ending each day. */
 public class FarmScreen implements Screen {
     public static final int GOAL_GOLD = 5000;   // grandpa's debt
@@ -17,7 +17,7 @@ public class FarmScreen implements Screen {
     private static final int LATE = 22 * 60;    // time of the "go to bed" warning, in minutes
     private static final int FADE_TICKS = 70;
     private static final int MESSAGE_TICKS = 220;
-
+ 
     private final GamePanel game;
     private final Random rng = new Random();
     private final Farm farm = new Farm();
@@ -29,12 +29,12 @@ public class FarmScreen implements Screen {
     private int fadeTicks, messageTicks;
     private boolean warnedLate;
     private String message = "";
-
+ 
     private FarmScreen(GamePanel game) {
         this.game = game;
         farmer.getSeedBag("Turnip").addSeeds(STARTING_SEEDS);
     }
-
+ 
     public static FarmScreen newGame(GamePanel game) {
         FarmScreen screen = new FarmScreen(game);
         screen.checklist = new Checklist();
@@ -42,7 +42,7 @@ public class FarmScreen implements Screen {
         screen.beginDay();
         return screen;
     }
-
+ 
     public static FarmScreen load(GamePanel game) {
         FarmScreen screen = new FarmScreen(game);
         try {
@@ -55,34 +55,41 @@ public class FarmScreen implements Screen {
         screen.beginDay();
         return screen;
     }
-
+ 
     public void beginDay() {
         fadeTicks = FADE_TICKS;
         warnedLate = false;
         game.setScreen(this);
     }
-
+ 
     public Farm getFarm() { return farm; }
     public Farmer getFarmer() { return farmer; }
     public GameClock getClock() { return clock; }
     public boolean isMonthOver() { return clock.getDay() > LAST_DAY; }
-
+ 
+    /** Can a machine cover this tile? Keeps clear of the farmer and of the door he wakes up at. */
+    public boolean canPlaceMachineAt(int col, int row) {
+        if (!farm.canPlaceMachineOn(col, row)) return false;
+        if (col == farmer.getCol() && row == farmer.getRow()) return false;
+        return Math.abs(col - DOOR_COL) > 1 || Math.abs(row - DOOR_ROW) > 1;   // never wall in the doorway
+    }
+ 
     public void say(String text) {
         message = text;
         messageTicks = MESSAGE_TICKS;
     }
-
+ 
     /** A note such as "-50G" rising from the tile the farmer is facing. */
     public void floatAtFacing(String text, Color color) {
         floatAt(farmer.facingCol(), farmer.facingRow(), text, color);
     }
-
+ 
     private void floatAt(int col, int row, String text, Color color) {
         floatingTexts.add(new FloatingText(text, col * Farm.TILE + Farm.TILE / 2.0, row * Farm.TILE, color));
     }
-
+ 
     // ---- keys -----------------------------------------------------------------
-
+ 
     @Override
     public void keyPressed(int code) {
         if (fadeTicks > 0) return;
@@ -92,13 +99,18 @@ public class FarmScreen implements Screen {
         else if (code == KeyEvent.VK_E) farmer.cycleSeed(1);
         else if (code >= KeyEvent.VK_1 && code <= KeyEvent.VK_9) farmer.selectSeed(code - KeyEvent.VK_1);
     }
-
+ 
     /** What SPACE does depends only on what the farmer is facing; hint() describes the same choice. */
     private void doAction() {
         int col = farmer.facingCol(), row = farmer.facingRow();
         Villager villager = farm.villagerAt(col, row);
         if (villager != null) {
             talkTo(villager);
+            return;
+        }
+        Machine machine = farm.machineAt(col, row);
+        if (machine != null) {
+            say("The " + machine.getKind().getName() + " is installed - it can't make anything yet");
             return;
         }
         Tile tile = farm.tileAt(col, row);
@@ -140,11 +152,13 @@ public class FarmScreen implements Screen {
             say(e.getMessage());
         }
     }
-
+ 
     /** The label shown next to the highlighted tile, or null if SPACE would do nothing there. */
     String hint() {
         int col = farmer.facingCol(), row = farmer.facingRow();
         if (farm.villagerAt(col, row) != null) return "Talk";
+        Machine machine = farm.machineAt(col, row);
+        if (machine != null) return machine.getKind().getName();
         Tile tile = farm.tileAt(col, row);
         if (tile == null) return null;
         switch (tile.getType()) {
@@ -159,7 +173,7 @@ public class FarmScreen implements Screen {
         Tool tool = farmer.toolFor(tile);
         return tool == null ? null : tool.getActionName();
     }
-
+ 
     private void talkTo(Villager villager) {
         int before = farmer.getGold();
         say(villager.talk(farmer));
@@ -167,7 +181,7 @@ public class FarmScreen implements Screen {
         if (reward > 0) floatAt(villager.getCol(), villager.getRow(), "+" + reward + "G", Ui.HIGHLIGHT);
         if (checklist != null) checklist.complete(Checklist.Step.TALK);
     }
-
+ 
     private void ship() throws FarmException {
         Bag<String> basket = farmer.getBasket();
         if (basket.isEmpty()) throw new FarmException("Nothing to ship - harvest something first");
@@ -180,7 +194,7 @@ public class FarmScreen implements Screen {
         floatAtFacing("+" + value + "G", Ui.HIGHLIGHT);
         say("Shipped! The money arrives while you sleep");
     }
-
+ 
     private void askToSleep() {
         int thirsty = farm.countThirstyCrops();
         String detail = thirsty == 0 ? "Watered crops grow one day overnight."
@@ -189,7 +203,7 @@ public class FarmScreen implements Screen {
         game.setScreen(new ConfirmScreen(game, this, "Go to bed and end the day?", detail,
                 "Sleep", "Not yet", thirsty > 0, () -> sleep(false)));
     }
-
+ 
     /** Ends the day: pays for what was shipped, grows the crops, saves, and shows the summary. */
     private void sleep(boolean passedOut) {
         List<String> lines = new ArrayList<>();
@@ -202,7 +216,7 @@ public class FarmScreen implements Screen {
         }
         if (shippedToday.isEmpty()) lines.add("Nothing was shipped today.");
         shippedToday.clear();
-
+ 
         int goldBefore = farmer.getGold();
         farmer.earn(earned);
         clock.nextDay(rng);
@@ -213,7 +227,7 @@ public class FarmScreen implements Screen {
         floatingTexts.clear();
         messageTicks = 0;
         checklist = null;   // the first day is over
-
+ 
         try {
             if (isMonthOver()) game.getSaveGame().delete();   // the story is over
             else game.getSaveGame().save(farm, farmer, clock);
@@ -222,9 +236,9 @@ public class FarmScreen implements Screen {
         }
         game.setScreen(new SummaryScreen(game, this, lines, goldBefore, farmer.getGold()));
     }
-
+ 
     // ---- update ---------------------------------------------------------------
-
+ 
     @Override
     public void update() {
         if (fadeTicks > 0) {
@@ -234,7 +248,7 @@ public class FarmScreen implements Screen {
         if (messageTicks > 0) messageTicks--;
         for (FloatingText text : floatingTexts) text.update();
         floatingTexts.removeIf(FloatingText::isDone);
-
+ 
         clock.tick();
         if (clock.isMidnight()) {
             sleep(true);
@@ -246,7 +260,7 @@ public class FarmScreen implements Screen {
         }
         farmer.update(farm, heldDirection());
     }
-
+ 
     private Direction heldDirection() {
         if (game.isHeld(KeyEvent.VK_UP, KeyEvent.VK_W)) return Direction.UP;
         if (game.isHeld(KeyEvent.VK_DOWN, KeyEvent.VK_S)) return Direction.DOWN;
@@ -254,9 +268,9 @@ public class FarmScreen implements Screen {
         if (game.isHeld(KeyEvent.VK_RIGHT, KeyEvent.VK_D)) return Direction.RIGHT;
         return null;
     }
-
+ 
     // ---- drawing --------------------------------------------------------------
-
+ 
     @Override
     public void draw(Graphics2D g) {
         farm.draw(g);
@@ -269,13 +283,13 @@ public class FarmScreen implements Screen {
         g.fillRect(0, 0, Ui.WIDTH, Ui.MAP_HEIGHT);
         for (FloatingText text : floatingTexts) text.draw(g);
         drawHint(g, col, row);
-
+ 
         Hud.draw(g, farmer, clock, farm.getVillager());
         if (checklist != null) checklist.draw(g, 195, 36);
         if (messageTicks > 0) drawMessage(g);
         if (fadeTicks > 0) drawDayStart(g);
     }
-
+ 
     /** Whoever stands lower on the screen is drawn last, so they appear in front. */
     private void drawPeople(Graphics2D g) {
         Villager villager = farm.getVillager();
@@ -284,7 +298,7 @@ public class FarmScreen implements Screen {
         farmer.draw(g);
         if (!villagerBehind) villager.draw(g, game.getFrames());
     }
-
+ 
     /** A small "SPACE  Water" tag beside the highlighted tile. */
     private void drawHint(Graphics2D g, int col, int row) {
         String hint = hint();
@@ -301,7 +315,7 @@ public class FarmScreen implements Screen {
         g.setColor(Ui.HIGHLIGHT);
         g.drawString(text, x + 6, y + 13);
     }
-
+ 
     private void drawRain(Graphics2D g) {
         int frames = game.getFrames();
         g.setColor(new Color(40, 60, 100, 50));
@@ -313,7 +327,7 @@ public class FarmScreen implements Screen {
             g.drawLine(x, y, x - 3, y + 10);
         }
     }
-
+ 
     private void drawMessage(Graphics2D g) {
         g.setFont(Ui.font(13));
         int width = g.getFontMetrics().stringWidth(message) + 24;
@@ -323,7 +337,7 @@ public class FarmScreen implements Screen {
         g.setColor(Color.WHITE);
         g.drawString(message, x + 12, y + 19);
     }
-
+ 
     private void drawDayStart(Graphics2D g) {
         int alpha = Math.min(255, fadeTicks * 255 * 2 / FADE_TICKS);   // stays black for the first half
         Ui.dim(g, alpha);

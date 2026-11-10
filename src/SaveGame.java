@@ -5,7 +5,7 @@ import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.util.List;
 import java.util.Map;
-
+ 
 /**
  * Saves the farm as plain text you can open and read, e.g.
  *   day 4
@@ -14,19 +14,20 @@ import java.util.Map;
  *   seeds Turnip 2
  *   request Turnip 3 360 4     (crop amount reward daysLeft)
  *   soil 5 6 Turnip 1 wet      (col row crop daysGrown wet/dry; "-" for an empty plot)
+ *   machine CAKE 9 6           (kind col row of its top-left tile)
  */
 public class SaveGame {
     private static final String HEADER = "little-farm save 1";
     private final Path file;
-
+ 
     public SaveGame(String fileName) {
         this.file = Paths.get(fileName);
     }
-
+ 
     public boolean exists() {
         return Files.exists(file);
     }
-
+ 
     /** A one-line description for the title menu, e.g. "Day 5, 780G", or null if there is no save. */
     public String describe() {
         if (!exists()) return null;
@@ -41,11 +42,11 @@ public class SaveGame {
         }
         return "Day " + day + ", " + gold + "G";
     }
-
+ 
     public void delete() throws IOException {
         Files.deleteIfExists(file);
     }
-
+ 
     public void save(Farm farm, Farmer farmer, GameClock clock) throws IOException {
         try (PrintWriter out = new PrintWriter(Files.newBufferedWriter(file))) {
             out.println(HEADER);
@@ -65,6 +66,9 @@ public class SaveGame {
                 out.println("request " + request.getCropName() + " " + request.getAmount() + " "
                         + request.getReward() + " " + request.getDaysLeft());
             }
+            for (Machine machine : farm.getMachines()) {
+                out.println("machine " + machine.getKind().name() + " " + machine.getCol() + " " + machine.getRow());
+            }
             for (int r = 0; r < Farm.ROWS; r++) {
                 for (int c = 0; c < Farm.COLS; c++) {
                     Tile tile = farm.tileAt(c, r);
@@ -76,12 +80,12 @@ public class SaveGame {
             }
         }
     }
-
+ 
     /** Fills a brand-new farm, farmer and clock from the file. */
     public void loadInto(Farm farm, Farmer farmer, GameClock clock) throws IOException {
         List<String> lines = Files.readAllLines(file);
         if (lines.isEmpty() || !lines.get(0).equals(HEADER)) throw new IOException("not a Little Farm save file");
-
+ 
         for (int i = 1; i < lines.size(); i++) {
             String[] parts = lines.get(i).trim().split(" ");
             try {
@@ -101,6 +105,10 @@ public class SaveGame {
                     case "seeds":  farmer.getSeedBag(parts[1]).setSeeds(Integer.parseInt(parts[2])); break;
                     case "basket": farmer.getBasket().add(parts[1], Integer.parseInt(parts[2])); break;
                     case "soil":   loadSoil(farm, parts); break;
+                    case "machine":
+                        farm.addMachine(new Machine(Machine.Kind.valueOf(parts[1]),
+                                Integer.parseInt(parts[2]), Integer.parseInt(parts[3])));
+                        break;
                     case "":       break;   // blank line
                     default:       throw new IOException("line " + (i + 1) + ": unknown entry '" + parts[0] + "'");
                 }
@@ -110,7 +118,7 @@ public class SaveGame {
             }
         }
     }
-
+ 
     private void loadSoil(Farm farm, String[] parts) throws FarmException {
         Tile tile = farm.tileAt(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
         if (tile == null) throw new FarmException("soil is off the map");
