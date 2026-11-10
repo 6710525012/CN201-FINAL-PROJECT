@@ -7,6 +7,8 @@ import java.util.Random;
 public class Villager {
     public static final int MAX_FRIENDSHIP = 5;
     private static final int FIRST_REQUEST_DAY = 2;
+    /** Chance (%) each morning that she asks for something when she has no request waiting. */
+    private static final int REQUEST_CHANCE_PERCENT = 50;
     private static final String[] CHATTER = {
         "Lovely day for farming, isn't it?",
         "Your grandpa grew the best turnips in the valley.",
@@ -52,7 +54,7 @@ public class Villager {
             friendship = Math.max(0, friendship - 1);
             request = null;
         }
-        if (request == null && (day == FIRST_REQUEST_DAY || rng.nextInt(3) == 0)) {
+        if (request == null && (day == FIRST_REQUEST_DAY || rng.nextInt(100) < REQUEST_CHANCE_PERCENT)) {
             request = Request.random(day, rng);
             String asked = name + " has a request for you!";
             news = news == null ? asked : news + " " + asked;
