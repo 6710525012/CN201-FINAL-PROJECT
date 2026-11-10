@@ -6,34 +6,46 @@ import java.awt.Graphics2D;
 public class Machine {
     public static final int SIZE = 2;   // tiles wide and tall
  
-    /** The three machines the shop sells: name, price, days to make, product, and what the product sells for. */
+        /** The three machines the shop sells: name, price, days to make, what goes in, product, and what the product sells for. */
     public enum Kind {
-        CAKE("Cake Maker", 30, 2, "Turnip Cake", 40),
-        MASHER("Potato Masher", 70, 3, "Mashed Potato", 90),
-        JAM("Jam Maker", 120, 4, "Strawberry Jam", 150);
- 
+        CAKE("Cake Maker", 30, 2, "Turnip", "Turnip Cake", 40),
+        MASHER("Potato Masher", 70, 3, "Potato", "Mashed Potato", 90),
+        JAM("Jam Maker", 120, 4, "Strawberry", "Strawberry Jam", 150);
+
         private final String name;
         private final int price, days, sellPrice;
-        private final String product;
- 
-        Kind(String name, int price, int days, String product, int sellPrice) {
+        private final String ingredient, product;
+
+        Kind(String name, int price, int days, String ingredient, String product, int sellPrice) {
             this.name = name;
             this.price = price;
             this.days = days;
+            this.ingredient = ingredient;
             this.product = product;
             this.sellPrice = sellPrice;
         }
- 
+
         public String getName() { return name; }
         public int getPrice() { return price; }
         public int getDays() { return days; }
+        public String getIngredient() { return ingredient; }
         public String getProduct() { return product; }
         public int getSellPrice() { return sellPrice; }
         public int getProfit() { return sellPrice - price; }
+
+        /** @return the kind that makes this product, or null if the name is not a product */
+        public static Kind forProduct(String product) {
+            for (Kind kind : values()) {
+                if (kind.product.equals(product)) return kind;
+            }
+            return null;
+        }
     }
  
     private final Kind kind;
     private final int col, row;
+    private boolean working = false;   // true from loading until the product is collected
+    private int daysLeft = 0;          // nights to go; 0 while working means it is ready
  
     public Machine(Kind kind, int col, int row) {
         this.kind = kind;
@@ -44,14 +56,57 @@ public class Machine {
     public Kind getKind() { return kind; }
     public int getCol() { return col; }
     public int getRow() { return row; }
+
+        // ---- making things ----------------------------------------------------------
+
+    public boolean isIdle() { return !working; }
+    public boolean isWorking() { return working && daysLeft > 0; }
+    public boolean isReady() { return working && daysLeft == 0; }
+    public int getDaysLeft() { return daysLeft; }
+
+    /** Starts a batch. The caller takes the ingredient out of the basket first. */
+    public void load() throws FarmException {
+        if (working) throw new FarmException("The " + kind.getName() + " is already busy");
+        working = true;
+        daysLeft = kind.getDays();
+    }
+
+    /** Takes the finished product out. @return the product's name, e.g. "Turnip Cake" */
+    public String collect() throws FarmException {
+        if (!isReady()) throw new FarmException("The " + kind.getName() + " has nothing ready yet");
+        working = false;
+        return kind.getProduct();
+    }
+
+    /** One night passes. */
+    public void newDay() {
+        if (working && daysLeft > 0) daysLeft--;
+    }
+
+    /** Puts a loaded machine back the way a save file left it. */
+    public void restore(int daysLeft) {
+        working = true;
+        this.daysLeft = Math.max(0, daysLeft);
+    }
  
     /** @return true if this machine stands on the tile (c, r) */
     public boolean covers(int c, int r) {
         return c >= col && c < col + SIZE && r >= row && r < row + SIZE;
     }
  
-    public void draw(Graphics2D g) {
-        draw(g, kind, col * Farm.TILE, row * Farm.TILE);
+        public void draw(Graphics2D g) {
+        int x = col * Farm.TILE, y = row * Farm.TILE;
+        draw(g, kind, x, y);
+        if (working) drawStatus(g, x, y);
+    }
+
+    /** A little badge: the nights still to go, or a yellow "!" when the product is ready. */
+    private void drawStatus(Graphics2D g, int x, int y) {
+        boolean ready = isReady();
+        g.setColor(ready ? new Color(240, 200, 40) : new Color(60, 60, 60, 210));
+        g.fillOval(x + 46, y + 2, 16, 16);
+        g.setColor(ready ? Color.BLACK : Color.WHITE);
+        g.drawString(ready ? "!" : String.valueOf(daysLeft), x + 52, y + 14);
     }
  
     /** Draws a machine with its top-left corner at pixel (x, y); also used for the ghost while placing. */
@@ -179,7 +234,7 @@ public class Machine {
         box(g, x + 14, y + 48, 14, 7, new Color(96, 64, 44));
         g.setColor(new Color(210, 232, 244));
         g.fillRoundRect(x + 18, y + 43, 7, 10, 3, 3);
-        g.setColor(new Color(236, 120, 30));
+        g.setColor(RED);
         g.fillRect(x + 19, y + 47, 5, 5);
         box(g, x + 26, y + 54, 28, 7, BENCH);
     }
