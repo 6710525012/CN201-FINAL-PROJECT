@@ -2,12 +2,15 @@ import java.awt.Color;
 import java.awt.Font;
 import java.awt.Graphics2D;
 import java.awt.Rectangle;
-
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.List;
+ 
 public class Farm {
     public static final int TILE = 32;   // pixels
     public static final int COLS = 20;
     public static final int ROWS = 15;
-
+ 
     // . grass   , tilled soil   # fence   ~ pond   H house   S seed shop   M machine shop   B shipping bin   V where the villager stands
     private static final String[] MAP = {
         "####################",
@@ -26,16 +29,17 @@ public class Farm {
         "#..................#",
         "####################",
     };
-
+ 
     private static final Color GRASS = new Color(110, 190, 75);
     private static final Color GRASS_DARK = new Color(80, 155, 55);
     private static final Color SOIL = new Color(150, 100, 62);
     private static final Color SOIL_WET = new Color(95, 62, 40);
     private static final Color WOOD = new Color(150, 105, 65);
-
+ 
     private final Tile[][] tiles = new Tile[ROWS][COLS];
+    private final List<Machine> machines = new ArrayList<>();
     private Villager villager;
-
+ 
     public Farm() {
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) {
@@ -48,25 +52,52 @@ public class Farm {
             }
         }
     }
-
+ 
     public Villager getVillager() { return villager; }
-
+ 
     /** @return the villager standing on (col, row), or null */
     public Villager villagerAt(int col, int row) {
         return villager != null && villager.getCol() == col && villager.getRow() == row ? villager : null;
     }
-
+ 
     /** @return the tile, or null if (col, row) is off the map */
     public Tile tileAt(int col, int row) {
         if (col < 0 || col >= COLS || row < 0 || row >= ROWS) return null;
         return tiles[row][col];
     }
-
+ 
     public boolean isWalkable(int col, int row) {
         Tile tile = tileAt(col, row);
-        return tile != null && tile.getType().isWalkable() && villagerAt(col, row) == null;
+        return tile != null && tile.getType().isWalkable() && villagerAt(col, row) == null && machineAt(col, row) == null;
     }
-
+ 
+    /** @return the machine standing on (col, row), or null */
+    public Machine machineAt(int col, int row) {
+        for (Machine machine : machines) {
+            if (machine.covers(col, row)) return machine;
+        }
+        return null;
+    }
+ 
+    public List<Machine> getMachines() { return Collections.unmodifiableList(machines); }
+ 
+    /** A machine needs bare grass: not soil, water, fences, buildings, the villager, or another machine. */
+    public boolean canPlaceMachineOn(int col, int row) {
+        Tile tile = tileAt(col, row);
+        return tile != null && tile.getType() == TileType.GRASS && villagerAt(col, row) == null && machineAt(col, row) == null;
+    }
+ 
+    public void addMachine(Machine machine) throws FarmException {
+        for (int r = 0; r < Machine.SIZE; r++) {
+            for (int c = 0; c < Machine.SIZE; c++) {
+                if (!canPlaceMachineOn(machine.getCol() + c, machine.getRow() + r)) {
+                    throw new FarmException("A machine can't stand there");
+                }
+            }
+        }
+        machines.add(machine);
+    }
+ 
     /** Growing crops that still need water today. */
     public int countThirstyCrops() {
         int count = 0;
@@ -77,7 +108,7 @@ public class Farm {
         }
         return count;
     }
-
+ 
     /** Crops grow overnight, then the new day's weather may water everything. */
     public void newDay(Weather weather) {
         for (Tile[] line : tiles) {
@@ -87,9 +118,9 @@ public class Farm {
             }
         }
     }
-
+ 
     // ---- drawing --------------------------------------------------------------
-
+ 
     public void draw(Graphics2D g) {
         for (int r = 0; r < ROWS; r++) {
             for (int c = 0; c < COLS; c++) drawTile(g, tiles[r][c], c, r);
@@ -98,8 +129,9 @@ public class Farm {
         drawShop(g, boundsOf(TileType.SHOP), "SEEDS");
         drawShop(g, boundsOf(TileType.MACHINE), "Machines");
         drawBin(g, boundsOf(TileType.BIN));
+        for (Machine machine : machines) machine.draw(g);
     }
-
+ 
     private void drawTile(Graphics2D g, Tile tile, int col, int row) {
         int x = col * TILE, y = row * TILE;
         int seed = col * 7 + row * 13;   // so each grass tile looks a little different, but never flickers
@@ -137,7 +169,7 @@ public class Farm {
                 drawGrass(g, x, y, seed);
         }
     }
-
+ 
     private void drawGrass(Graphics2D g, int x, int y, int seed) {
         g.setColor(GRASS);
         g.fillRect(x, y, TILE, TILE);
@@ -146,7 +178,7 @@ public class Farm {
         g.drawLine(tx, ty, tx - 2, ty - 5);
         g.drawLine(tx + 3, ty, tx + 4, ty - 6);
     }
-
+ 
     /** The little "needs water" sign on a dry plot. */
     private void drawDroplet(Graphics2D g, int x, int y) {
         g.setColor(new Color(120, 190, 255));
@@ -155,7 +187,7 @@ public class Farm {
         g.setColor(new Color(30, 80, 160));
         g.drawOval(x, y + 3, 7, 7);
     }
-
+ 
     /** The pixel rectangle covered by every tile of one type, e.g. the whole house. */
     private Rectangle boundsOf(TileType type) {
         int minC = COLS, minR = ROWS, maxC = -1, maxR = -1;
@@ -170,7 +202,7 @@ public class Farm {
         }
         return new Rectangle(minC * TILE, minR * TILE, (maxC - minC + 1) * TILE, (maxR - minR + 1) * TILE);
     }
-
+ 
     private void drawHouse(Graphics2D g, Rectangle b) {
         int wallTop = b.y + b.height / 3;
         g.setColor(new Color(240, 225, 190));
@@ -185,7 +217,7 @@ public class Farm {
         g.setColor(WOOD);
         g.drawRect(b.x + b.width - 46, wallTop + 16, 24, 18);
     }
-
+ 
     private void drawShop(Graphics2D g, Rectangle b, String label) {
         g.setColor(WOOD);
         g.fillRect(b.x + 6, b.y + 30, 4, b.height - 30);
@@ -203,7 +235,7 @@ public class Farm {
         g.setColor(new Color(60, 40, 30));
         g.drawString(label, b.x + b.width / 2 - textWidth / 2, b.y + b.height / 2 + 29);
     }
-
+ 
     private void drawBin(Graphics2D g, Rectangle b) {
         g.setColor(WOOD);
         g.fillRect(b.x + 3, b.y + 9, 26, 21);
