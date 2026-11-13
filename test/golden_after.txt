@@ -1,0 +1,29 @@
+day=7 weather=RAINY
+gold=1234 basket=Turnip x5, Turnip Cake x2
+machines=2
+--- saved again ---
+little-farm save 1
+day 7
+weather RAINY
+gold 1234
+earned 900
+can 3
+seeds Turnip 4
+seeds Potato 2
+seeds Strawberry 0
+basket Turnip 5
+basket Turnip Cake 2
+villager 3 2
+request Potato 2 560 5
+machine CAKE 9 6 1
+machine JAM 12 6
+soil 4 6 - 0 dry
+soil 5 6 Turnip 1 wet
+soil 6 6 - 0 dry
+soil 7 6 - 0 dry
+soil 8 6 - 0 dry
+soil 4 7 - 0 dry
+soil 5 7 - 0 dry
+soil 6 7 - 0 dry
+soil 7 7 - 0 dry
+soil 8 7 - 0 dry
