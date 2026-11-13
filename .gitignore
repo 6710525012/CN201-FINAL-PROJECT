@@ -1,0 +1,6 @@
+out/
+*.class
+littlefarm_save.txt
+golden_test_save.txt
+.idea/
+*.iml
