@@ -95,26 +95,13 @@ public class SaveGame {
                     case "weather": clock.setWeather(Weather.valueOf(parts[1])); break;
                     case "gold":    farmer.setGold(Integer.parseInt(parts[1])); break;
                     case "earned":  farmer.setTotalEarned(Integer.parseInt(parts[1])); break;
-                    case "villager":
-                        farm.getVillager().restore(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
-                        break;
-                    case "request":
-                        farm.getVillager().setRequest(new Request(parts[1], Integer.parseInt(parts[2]),
-                                Integer.parseInt(parts[3]), Integer.parseInt(parts[4])));
-                        break;
+                    case "villager": loadVillager(farm, parts); break;
+                    case "request": loadRequest(farm, parts); break;
                     case "can":    farmer.getCan().setWater(Integer.parseInt(parts[1])); break;
                     case "seeds":  farmer.getSeedBag(parts[1]).setSeeds(Integer.parseInt(parts[2])); break;
-                    case "basket":   // the name may hold spaces ("Turnip Cake"), the amount is the last word
-                        farmer.getBasket().add(String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length - 1)),
-                                Integer.parseInt(parts[parts.length - 1]));
-                        break;
+                    case "basket": loadBasket(farmer, parts); break;
                     case "soil":   loadSoil(farm, parts); break;
-                    case "machine":
-                        Machine machine = new Machine(Machine.Kind.valueOf(parts[1]),
-                                Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
-                        if (parts.length > 4) machine.restore(Integer.parseInt(parts[4]));
-                        farm.addMachine(machine);
-                        break;
+                    case "machine": loadMachine(farm, parts); break;
                     case "":       break;   // blank line
                     default:       throw new IOException("line " + (i + 1) + ": unknown entry '" + parts[0] + "'");
                 }
@@ -125,6 +112,28 @@ public class SaveGame {
         }
     }
  
+    private void loadVillager(Farm farm, String[] parts) {
+        farm.getVillager().restore(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
+    }
+
+    private void loadRequest(Farm farm, String[] parts) {
+        farm.getVillager().setRequest(new Request(parts[1], Integer.parseInt(parts[2]),
+                Integer.parseInt(parts[3]), Integer.parseInt(parts[4])));
+    }
+
+    /** The name may hold spaces ("Turnip Cake"); the amount is the last word. */
+    private void loadBasket(Farmer farmer, String[] parts) {
+        String name = String.join(" ", java.util.Arrays.copyOfRange(parts, 1, parts.length - 1));
+        farmer.getBasket().add(name, Integer.parseInt(parts[parts.length - 1]));
+    }
+
+    private void loadMachine(Farm farm, String[] parts) throws FarmException {
+        Machine machine = new Machine(Machine.Kind.valueOf(parts[1]),
+                Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
+        if (parts.length > 4) machine.restore(Integer.parseInt(parts[4]));
+        farm.addMachine(machine);
+    }
+
     private void loadSoil(Farm farm, String[] parts) throws FarmException {
         Tile tile = farm.tileAt(Integer.parseInt(parts[1]), Integer.parseInt(parts[2]));
         if (tile == null) throw new FarmException("soil is off the map");
