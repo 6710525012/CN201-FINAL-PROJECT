@@ -219,10 +219,11 @@ public class FarmScreen implements Screen {
         }
     }
 
-    /** What one of this thing sells for: a crop, or something a machine made. */
-    private static int priceOf(String name) {
+    /** What one of this thing sells for today: a crop, or something a machine made, through the market's price mode. */
+    private int priceOf(String name) {
         Machine.Kind kind = Machine.Kind.forProduct(name);
-        return kind != null ? kind.getSellPrice() : CropFactory.create(name).getSellPrice();
+        int base = kind != null ? kind.getSellPrice() : CropFactory.create(name).getSellPrice();
+        return game.getPriceStrategy().priceFor(base);
     }
  
     private void ship() throws FarmException {
