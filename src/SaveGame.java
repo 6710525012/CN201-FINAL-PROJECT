@@ -128,7 +128,7 @@ public class SaveGame {
     }
 
     private void loadMachine(Farm farm, String[] parts) throws FarmException {
-        Machine machine = new Machine(Machine.Kind.valueOf(parts[1]),
+        Machine machine = MachineFactory.create(Machine.Kind.valueOf(parts[1]),
                 Integer.parseInt(parts[2]), Integer.parseInt(parts[3]));
         if (parts.length > 4) machine.restore(Integer.parseInt(parts[4]));
         farm.addMachine(machine);

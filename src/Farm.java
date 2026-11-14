@@ -117,7 +117,7 @@ public class Farm {
                 if (weather.watersCrops()) tile.soak();
             }
         }
-        for (Machine machine : machines) machine.newDay();
+        for (Machine machine : machines) machine.newDay(weather);
     }
  
     // ---- drawing --------------------------------------------------------------
