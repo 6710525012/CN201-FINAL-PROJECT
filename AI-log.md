@@ -8,3 +8,5 @@
 | 2026-11-13 | PM | ร่างไฟล์แบ่งงาน Excel พร้อมโค้ดตัวอย่าง | "ทำ Excel แบ่งงานเลย" | (แต่ละคนเติมแถวของตัวเองว่าแก้/เข้าใจโค้ดตรงไหน) |
 
 | 2026-11-14 | Panita Chanowit | ใช้ AI ช่วยไล่ขั้นตอน Git และแก้ปัญหา terminal ตอนทำ golden test | "ทำตามไฟล์ ตอนนี้ทำถึง SaveGame.java แล้ว" | เปลี่ยนคำสั่ง cmd /c เป็น cmd //c เพราะใช้ Git Bash; เลือก merge แบบปกติ ไม่ squash เพื่อให้ 2 commit แยกกัน |
+
+| 2026-11-14 | Supakjira Songsawang | แปลง Machine เป็น abstract class พร้อม 3 คลาสลูกและ Factory | "เปลี่ยน Machine เป็น abstract class และทำ polymorphism" | ตรวจสอบให้ signature เมธอดตรงตาม checklist และคงฟังก์ชันวาดส่วนกลางไว้ |
