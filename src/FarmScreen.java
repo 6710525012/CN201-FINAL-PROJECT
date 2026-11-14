@@ -48,6 +48,10 @@ public class FarmScreen implements Screen {
         try {
             game.getSaveGame().loadInto(screen.farm, screen.farmer, screen.clock);
             screen.say("Welcome back!");
+        } catch (SaveFileException e) {
+            screen = newGame(game);
+            screen.say("Save file broken at line " + e.getLineNumber() + " - started a new farm");
+            System.out.println("Save file error: " + e.getMessage());
         } catch (IOException e) {
             screen = newGame(game);
             screen.say("Couldn't read the save (" + e.getMessage() + ") - started a new farm");
