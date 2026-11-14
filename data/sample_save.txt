@@ -1,0 +1,23 @@
+little-farm save 1
+day 5
+weather RAINY
+gold 200
+earned 0
+can 18
+seeds Turnip 4
+seeds Potato 0
+seeds Strawberry 0
+villager 0 0
+request Turnip 3 360 3
+machine CAKE 15 6 1
+machine MASHER 13 6
+soil 4 6 - 0 wet
+soil 5 6 - 0 wet
+soil 6 6 - 0 wet
+soil 7 6 - 0 wet
+soil 8 6 - 0 wet
+soil 4 7 - 0 wet
+soil 5 7 - 0 wet
+soil 6 7 - 0 wet
+soil 7 7 - 0 wet
+soil 8 7 - 0 wet
