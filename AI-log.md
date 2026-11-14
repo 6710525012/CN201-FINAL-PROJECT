@@ -10,3 +10,5 @@
 | 2026-11-14 | Panita Chanowit | ใช้ AI ช่วยไล่ขั้นตอน Git และแก้ปัญหา terminal ตอนทำ golden test | "ทำตามไฟล์ ตอนนี้ทำถึง SaveGame.java แล้ว" | เปลี่ยนคำสั่ง cmd /c เป็น cmd //c เพราะใช้ Git Bash; เลือก merge แบบปกติ ไม่ squash เพื่อให้ 2 commit แยกกัน |
 
 | 2026-11-14 | Supakjira Songsawang | แปลง Machine เป็น abstract class พร้อม 3 คลาสลูกและ Factory | "เปลี่ยน Machine เป็น abstract class และทำ polymorphism" | ตรวจสอบให้ signature เมธอดตรงตาม checklist และคงฟังก์ชันวาดส่วนกลางไว้ |
+
+| 2026-11-14 | Pasika Sattraporn | เพิ่ม SaveFileException ใน SaveGame.java และ FarmScreen.java และทดสอบการเซฟ/โหลด Cake Maker | "เพิ่ม SaveFileException และตรวจสอบไฟล์เซฟเสียอย่างไร" | โค้ดตัวอย่างร่างโดย AI แล้วตรวจสอบและทดสอบเอง โดยแก้ไฟล์เซฟหลายกรณีและตรวจสอบ error |
