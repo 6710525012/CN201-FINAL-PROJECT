@@ -22,10 +22,16 @@ public class GamePanel extends JPanel implements ActionListener {
     private final Timer timer = new Timer(16, this);
     private final Set<Integer> keysDown = new HashSet<>();
     private final SaveGame saveGame = new SaveGame("littlefarm_save.txt");
+    private final PriceStrategy priceStrategy;
     private Screen screen;
     private int frames;
 
     public GamePanel() {
+        this(new NormalPrice());
+    }
+
+    public GamePanel(PriceStrategy priceStrategy) {
+        this.priceStrategy = priceStrategy;
         setPreferredSize(new Dimension((int) (Ui.WIDTH * START_SCALE), (int) (Ui.HEIGHT * START_SCALE)));
         setBackground(Color.BLACK);   // the bars beside the game when the window's shape doesn't match
         setFocusable(true);
@@ -55,6 +61,7 @@ public class GamePanel extends JPanel implements ActionListener {
     public void setScreen(Screen next) { screen = next; }
     public void showTitle() { screen = new TitleScreen(this); }
     public SaveGame getSaveGame() { return saveGame; }
+    public PriceStrategy getPriceStrategy() { return priceStrategy; }
     public int getFrames() { return frames; }
 
     public boolean isHeld(int key, int otherKey) {
