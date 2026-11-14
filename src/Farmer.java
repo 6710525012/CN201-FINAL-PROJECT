@@ -78,7 +78,7 @@ public class Farmer {
     }
 
     public void spendGold(int amount) throws FarmException {
-        if (amount > gold) throw new FarmException("Not enough gold (need " + amount + "G)");
+        if (amount > gold) throw new NotEnoughGoldException(amount, gold);
         gold -= amount;
     }
 
