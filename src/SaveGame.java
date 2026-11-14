@@ -83,9 +83,9 @@ public class SaveGame {
     }
  
     /** Fills a brand-new farm, farmer and clock from the file. */
-    public void loadInto(Farm farm, Farmer farmer, GameClock clock) throws IOException {
+    public void loadInto(Farm farm, Farmer farmer, GameClock clock) throws IOException, SaveFileException {
         List<String> lines = Files.readAllLines(file);
-        if (lines.isEmpty() || !lines.get(0).equals(HEADER)) throw new IOException("not a Little Farm save file");
+        if (lines.isEmpty() || !lines.get(0).equals(HEADER)) throw new SaveFileException(1, "not a Little Farm save file");
  
         for (int i = 1; i < lines.size(); i++) {
             String[] parts = lines.get(i).trim().split(" ");
@@ -103,11 +103,13 @@ public class SaveGame {
                     case "soil":   loadSoil(farm, parts); break;
                     case "machine": loadMachine(farm, parts); break;
                     case "":       break;   // blank line
-                    default:       throw new IOException("line " + (i + 1) + ": unknown entry '" + parts[0] + "'");
+                    default:       throw new SaveFileException(i + 1, "unknown entry '" + parts[0] + "'");
                 }
+            } catch (SaveFileException e) {
+                throw e;
             } catch (IllegalArgumentException | IndexOutOfBoundsException | FarmException e) {
                 // NumberFormatException is an IllegalArgumentException, so a bad number lands here too
-                throw new IOException("line " + (i + 1) + " is damaged: " + lines.get(i), e);
+                throw new SaveFileException(i + 1, "damaged: " + lines.get(i));
             }
         }
     }
