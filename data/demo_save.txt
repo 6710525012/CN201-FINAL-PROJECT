@@ -1,0 +1,17 @@
+little-farm save 1
+day 5
+weather SUNNY
+gold 800
+earned 500
+can 10
+seeds Turnip 5
+seeds Potato 3
+seeds Strawberry 3
+basket Turnip 3
+basket Potato 3
+basket Strawberry 3
+villager 0 0
+machine CAKE 9 6
+machine MASHER 12 6 1
+machine JAM 15 6 1
+

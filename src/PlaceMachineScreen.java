@@ -93,7 +93,7 @@ public class PlaceMachineScreen implements Screen {
             return;
         }
         try {
-            farm.getFarm().addMachine(new Machine(kind, col, row));
+            farm.getFarm().addMachine(MachineFactory.create(kind, col, row));
         } catch (FarmException e) {
             status = e.getMessage();
             return;

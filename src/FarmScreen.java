@@ -194,9 +194,10 @@ public class FarmScreen implements Screen {
         try {
             if (machine.isReady()) {
                 String product = machine.collect();
-                farmer.getBasket().add(product, 1);
-                floatAtFacing("+1 " + product, Color.WHITE);
-                say("Collected a " + product.toLowerCase() + " - ship it in the bin");
+                int amount = machine.getOutputAmount();
+                farmer.getBasket().add(product, amount);
+                floatAtFacing("+" + amount + " " + product, Color.WHITE);
+                say("Collected " + (amount > 1 ? amount + " " : "a ") + product.toLowerCase() + " - ship it in the bin");
             } else if (machine.isWorking()) {
                 int nights = machine.getDaysLeft();
                 say("The " + kind.getName() + " is working - " + nights + (nights == 1 ? " more night" : " more nights"));
